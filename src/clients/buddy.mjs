@@ -9,8 +9,8 @@ import { readJsonObject, stringifyJson } from './json.mjs';
 const PROTOCOL = 'chat_completions';
 const PREFERENCES = ['claude-sonnet-5-5', 'deepseek-v4-pro', 'glm-5.3', 'kimi-k3'];
 
-function makeBuddy({ id, name, dirName, commands }) {
-  const dir = ({ home }) => path.join(home, dirName);
+function makeBuddy({ id, name, dirName, dirEnv, commands }) {
+  const dir = ({ home, env = {} }) => (dirEnv && env[dirEnv]) || path.join(home, dirName);
   return {
     id,
     name,
@@ -24,8 +24,8 @@ function makeBuddy({ id, name, dirName, commands }) {
       return [dir(ctx)];
     },
 
-    plan(changeset, { home, apiKey, baseUrl, models }) {
-      const file = path.join(dir({ home }), 'models.json');
+    plan(changeset, { home, env, apiKey, baseUrl, models }) {
+      const file = path.join(dir({ home, env }), 'models.json');
       const config = readJsonObject(changeset, file);
       const existing = Array.isArray(config.models) ? config.models : [];
       const theirs = existing.filter((entry) => entry?.vendor !== VENDOR_NAME);
@@ -60,5 +60,7 @@ function makeBuddy({ id, name, dirName, commands }) {
   };
 }
 
+// WorkBuddy 5.x 只读 ~/.workbuddy（它启动时把 CODEBUDDY_CONFIG_DIR 指到这里），~/.codebuddy 是旧版遗留，
+// Owner 2026-10-21 在 WorkBuddy v5.8.3 上确认。CodeBuddy Code 认 CODEBUDDY_CONFIG_DIR，没设时用 ~/.codebuddy。
 export const workbuddy = makeBuddy({ id: 'workbuddy', name: 'WorkBuddy', dirName: '.workbuddy', commands: [] });
-export const codebuddy = makeBuddy({ id: 'codebuddy', name: 'CodeBuddy Code', dirName: '.codebuddy', commands: ['codebuddy'] });
+export const codebuddy = makeBuddy({ id: 'codebuddy', name: 'CodeBuddy Code', dirName: '.codebuddy', dirEnv: 'CODEBUDDY_CONFIG_DIR', commands: ['codebuddy'] });

@@ -149,3 +149,13 @@ test('codebuddy writes the same format under ~/.codebuddy without creating avail
   assert.equal(out.models.length, 4);
   assert.equal(out.availableModels, undefined);
 });
+
+test('codebuddy honours CODEBUDDY_CONFIG_DIR, workbuddy always uses ~/.workbuddy', (t) => {
+  const home = tempHome(t);
+  const custom = path.join(home, 'custom-buddy');
+  plan('codebuddy', home, { env: { CODEBUDDY_CONFIG_DIR: custom } });
+  assert.ok(fs.existsSync(path.join(custom, 'models.json')));
+  assert.ok(!fs.existsSync(path.join(home, '.codebuddy')));
+  plan('workbuddy', home, { env: { CODEBUDDY_CONFIG_DIR: custom } });
+  assert.ok(fs.existsSync(path.join(home, '.workbuddy', 'models.json')));
+});

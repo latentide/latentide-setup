@@ -18,7 +18,7 @@ npx latentide
 | Codex（CLI / IDE 插件） | OpenAI Responses | `~/.codex/config.toml`，Key 写进环境变量 `LATENTIDE_API_KEY` | 自动 |
 | Kimi CLI（Kimi Code） | Anthropic Messages + OpenAI Chat | `~/.kimi-code/config.toml`（老版本 `~/.kimi/config.toml`） | 自动 |
 | WorkBuddy（腾讯） | OpenAI Chat | `~/.workbuddy/models.json` | 自动 |
-| CodeBuddy Code（腾讯） | OpenAI Chat | `~/.codebuddy/models.json` | 自动 |
+| CodeBuddy Code（腾讯） | OpenAI Chat | `~/.codebuddy/models.json`（设了 `CODEBUDDY_CONFIG_DIR` 时写到那里） | 自动 |
 | Cursor、Trae、Cherry Studio、Chatbox、Cline / Roo Code | — | 只能在界面里填 | `npx latentide guide` 打印填写说明 |
 
 模型列表不写死在工具里：运行时从网关 `GET /models` 拉取这把 Key 能用的模型，并且只列出“在该客户端所用协议下支持工具调用”的模型，免得配完就报错。
