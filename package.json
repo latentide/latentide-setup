@@ -1,0 +1,38 @@
+{
+  "name": "latentide",
+  "version": "0.1.0",
+  "description": "一条命令把 Claude Code、Codex、Kimi CLI、WorkBuddy 等 AI 编程客户端接入微澜 Latentide API 网关",
+  "keywords": [
+    "latentide",
+    "claude-code",
+    "codex",
+    "kimi-cli",
+    "workbuddy",
+    "codebuddy",
+    "openai",
+    "anthropic",
+    "api-gateway"
+  ],
+  "homepage": "https://latentide.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/latentide/latentide-setup.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "latentide": "bin/latentide.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
