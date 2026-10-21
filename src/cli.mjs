@@ -6,7 +6,6 @@ import { CLIENTS, detectInstalled, findClient } from './clients/index.mjs';
 import { ConfigParseError } from './clients/json.mjs';
 import { manualGuides } from './clients/manual.mjs';
 import { CONSOLE_URL, DEFAULT_BASE_URL, ENV_KEY, maskKey, normalizeBaseUrl } from './constants.mjs';
-import { removeBlock, restoreEnv } from './env-persist.mjs';
 import { Changeset, latestRun, markUndone, restoreFiles } from './fsx.mjs';
 import { msg, setLang } from './i18n.mjs';
 import { findModel } from './models.mjs';
@@ -96,7 +95,6 @@ export async function main(argv, deps = {}) {
     home: deps.home ?? os.homedir(),
     env: deps.env ?? process.env,
     platform: deps.platform ?? process.platform,
-    shell: deps.shell ?? process.env.SHELL,
     fetchImpl: deps.fetchImpl ?? fetch,
     interactive: deps.interactive ?? isInteractive()
   };
@@ -257,8 +255,7 @@ async function setup(ids, options, ctx, baseUrl) {
 function undo(options, ctx) {
   const run = latestRun(ctx.home);
   if (!run) { ui.out(msg('没有可以撤销的配置记录。', 'Nothing to undo.')); return 0; }
-  const { restored, skipped } = restoreFiles(run, { force: options.force, removeEnvBlock: removeBlock });
-  restoreEnv(run.manifest.env ?? [], { platform: ctx.platform });
+  const { restored, skipped } = restoreFiles(run, { force: options.force });
   for (const file of restored) ui.ok(msg(`已还原 ${file}`, `Restored ${file}`));
   for (const file of skipped) ui.warn(msg(`${file} 在配置之后被改过，未还原（加 --force 强制还原）`, `${file} changed after setup; not restored (use --force)`));
   if (skipped.length === 0) markUndone(run);

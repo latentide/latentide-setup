@@ -3,7 +3,7 @@ export const DEFAULT_BASE_URL = 'https://api.latentide.com';
 export const CONSOLE_URL = 'https://latentide.com';
 export const DOCS_URL = 'https://latentide.com/docs';
 
-/** 写进 shell 配置、Codex env_key 的变量名。 */
+/** 脚本里可以用这个环境变量传 Key（代替交互输入）。 */
 export const ENV_KEY = 'LATENTIDE_API_KEY';
 
 /** 我们写进各客户端配置里的条目统一带这个标记，重复运行时据此替换、不碰用户自己的条目。 */

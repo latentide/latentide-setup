@@ -14,9 +14,9 @@ npx latentide
 
 | 客户端 | 协议 | 改哪个文件 | 方式 |
 |---|---|---|---|
-| Claude Code | Anthropic Messages | `~/.claude/settings.json`（`env` 字段）、`~/.claude.json` | 自动 |
-| Codex（CLI / IDE 插件） | OpenAI Responses | `~/.codex/config.toml`，Key 写进环境变量 `LATENTIDE_API_KEY` | 自动 |
-| Kimi CLI（Kimi Code） | Anthropic Messages + OpenAI Chat | `~/.kimi-code/config.toml`（老版本 `~/.kimi/config.toml`） | 自动 |
+| Claude Code（CLI / VS Code 插件） | Anthropic Messages | `~/.claude/settings.json`（`env` 字段）、`~/.claude/config.json`、`~/.claude.json` | 自动 |
+| Codex（CLI / IDE 插件） | OpenAI Responses | `~/.codex/config.toml`、`~/.codex/auth.json` | 自动 |
+| Kimi CLI（Kimi Code） | Anthropic Messages + OpenAI Responses | `~/.kimi-code/config.toml`（开源版 `~/.kimi/config.toml`） | 自动 |
 | WorkBuddy（腾讯） | OpenAI Chat | `~/.workbuddy/models.json` | 自动 |
 | CodeBuddy Code（腾讯） | OpenAI Chat | `~/.codebuddy/models.json`（设了 `CODEBUDDY_CONFIG_DIR` 时写到那里） | 自动 |
 | Cursor、Trae、Cherry Studio、Chatbox、Cline / Roo Code | — | 只能在界面里填 | `npx latentide guide` 打印填写说明 |
@@ -54,7 +54,7 @@ printf '%s' "$KEY" | npx latentide setup claude-code --key-stdin -y
 
 ## 它会做什么、不会做什么
 
-- 只改上表列出的文件，只动我们自己的字段和条目（`latentide` 供给、`vendor: "Latentide"` 的模型、`# >>> latentide >>>` 标记包住的环境变量段），你原有的配置、注释和顺序都保留。
+- 只改上表列出的文件，只动我们自己的字段和条目（`latentide` 供给、`vendor: "Latentide"` 的模型），你原有的配置、注释和顺序都保留。
 - 配置文件解析不了（比如 JSON 写坏了）就跳过这个客户端，不会覆盖。
 - 写入前把原文件备份到 `~/.latentide/backups/<时间>/`。`undo` 发现你在配置之后又改过某个文件，默认不还原它，避免冲掉你的修改。唯一例外是 `~/.claude.json`：工具只在里面加了 `hasCompletedOnboarding`（跳过官方登录页），这个文件 Claude Code 自己一直在改写，undo 时保留不动。
 - 含 Key 的文件权限设为 `0600`（Windows 除外）。
@@ -63,7 +63,7 @@ printf '%s' "$KEY" | npx latentide setup claude-code --key-stdin -y
 
 ## 常见问题
 
-**Codex 配完提示找不到 Key？** Codex 只从环境变量读自定义供给的 Key。工具已把 `LATENTIDE_API_KEY` 写进 `~/.zshrc` / `~/.bashrc`（Windows 用 `setx` 写进用户环境变量），需要重开终端；从 Dock 或开始菜单启动的 IDE 也要重启。
+**Codex 原来登录的 ChatGPT 账号呢？** 和 [CC Switch](https://github.com/farion1231/cc-switch) 一样，Key 写进 `~/.codex/auth.json`，会替换掉里面的 ChatGPT 登录。原文件已备份，`npx latentide undo` 就能换回来。已经打开的 Codex 需要重启。
 
 **想换回官方账号？** `npx latentide undo`。
 

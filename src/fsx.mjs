@@ -13,8 +13,6 @@ export class Changeset {
     this.runId = now.toISOString().replace(/[:.]/g, '-');
     this.backupDir = path.join(home, '.latentide', 'backups', this.runId);
     this.files = new Map();
-    this.envActions = [];
-    this.deferred = [];
   }
 
   read(file) {
@@ -28,8 +26,7 @@ export class Changeset {
   /**
    * @param {object} [options]
    * @param {boolean} [options.secret] 内容含 Key，文件权限收紧为 0600
-   * @param {'restore'|'remove-env-block'|'keep'} [options.undo] undo 方式：整份还原；只删掉我们加的那段（shell 配置用，
-   *   因为别的安装程序也常往里追加内容）；或不还原
+   * @param {'restore'|'keep'} [options.undo] undo 方式：整份还原，或不还原（客户端自己频繁改写的状态文件）
    */
   write(file, content, { secret = false, undo = 'restore' } = {}) {
     if (!this.files.has(file)) {
@@ -45,17 +42,11 @@ export class Changeset {
 
   /** 某个客户端规划到一半出错时，用它撤回这个客户端已暂存的改动。 */
   snapshot() {
-    return {
-      files: new Map([...this.files].map(([file, entry]) => [file, { ...entry }])),
-      env: this.envActions.length,
-      deferred: this.deferred.length
-    };
+    return new Map([...this.files].map(([file, entry]) => [file, { ...entry }]));
   }
 
   rollback(snapshot) {
-    this.files = snapshot.files;
-    this.envActions.length = snapshot.env;
-    this.deferred.length = snapshot.deferred;
+    this.files = snapshot;
   }
 
   /** 暂存的改动（内容有变化的文件）。 */
@@ -63,18 +54,12 @@ export class Changeset {
     return [...this.files].filter(([, entry]) => entry.before !== entry.after).map(([file, entry]) => ({ file, ...entry }));
   }
 
-  /** 记一条非文件改动（如 Windows 用户环境变量），apply 时才执行 effect，dry-run 不执行。 */
-  recordEnv(action, effect) {
-    this.envActions.push(action);
-    if (effect) this.deferred.push(effect);
-  }
-
   /** 真正落盘。返回改动过的文件列表（内容没变的不算）。 */
   apply() {
     const changed = [...this.files].filter(([, entry]) => entry.before !== entry.after);
-    if (this.dryRun || (changed.length === 0 && this.envActions.length === 0)) return changed.map(([file]) => file);
+    if (this.dryRun || changed.length === 0) return changed.map(([file]) => file);
     fs.mkdirSync(this.backupDir, { recursive: true, mode: 0o700 });
-    const manifest = { version: 1, runId: this.runId, files: [], env: this.envActions };
+    const manifest = { version: 1, runId: this.runId, files: [] };
     changed.forEach(([file, entry], index) => {
       let backup = null;
       if (entry.before !== null) {
@@ -86,7 +71,6 @@ export class Changeset {
       writeAtomic(file, entry.after, entry.secret ? 0o600 : undefined);
     });
     writeAtomic(path.join(this.backupDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 0o600);
-    for (const effect of this.deferred) effect();
     return changed.map(([file]) => file);
   }
 }
@@ -124,20 +108,15 @@ export function latestRun(home) {
 
 /**
  * 按清单还原文件。文件在我们写入之后又被改过的，默认跳过并报告，免得冲掉用户后来的修改；
- * force 时照样还原。环境变量的还原由调用方处理（与平台相关）。
+ * force 时照样还原。
  */
-export function restoreFiles(run, { force = false, removeEnvBlock } = {}) {
+export function restoreFiles(run, { force = false } = {}) {
   const restored = [];
   const skipped = [];
   for (const entry of [...run.manifest.files].reverse()) {
     let current = null;
     try { current = fs.readFileSync(entry.path, 'utf8'); } catch { /* 已被删除 */ }
     if (entry.undo === 'keep') continue;
-    if (entry.undo === 'remove-env-block') {
-      if (current !== null) writeAtomic(entry.path, removeEnvBlock(current));
-      restored.push(entry.path);
-      continue;
-    }
     if (!force && current !== null && entry.written && sha256(current) !== entry.written) {
       skipped.push(entry.path);
       continue;

@@ -58,5 +58,5 @@ export function write(file, content) {
 }
 
 export function ctxFor(home, extra = {}) {
-  return { home, env: {}, platform: 'linux', shell: '/bin/zsh', apiKey: API_KEY, baseUrl: BASE_URL, models: MODELS, ...extra };
+  return { home, env: {}, platform: 'linux', apiKey: API_KEY, baseUrl: BASE_URL, models: MODELS, ...extra };
 }

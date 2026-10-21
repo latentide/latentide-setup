@@ -7,29 +7,27 @@ import { fetchModels, ApiError, ping } from '../src/api.mjs';
 import { API_KEY, BASE_URL, fakeFetch, read, tempHome, write } from './helpers.mjs';
 
 function deps(home, fetchImpl = fakeFetch()) {
-  return { home, env: { LATENTIDE_API_KEY: API_KEY, PATH: '' }, platform: 'linux', shell: '/bin/bash', fetchImpl, interactive: false };
+  return { home, env: { LATENTIDE_API_KEY: API_KEY, PATH: '' }, platform: 'linux', fetchImpl, interactive: false };
 }
 
-test('setup then undo restores the original files and removes only our shell block', async (t) => {
+test('setup then undo restores the original files', async (t) => {
   const home = tempHome(t);
   const settings = path.join(home, '.claude', 'settings.json');
+  const auth = path.join(home, '.codex', 'auth.json');
   write(settings, '{\n  "theme": "dark"\n}\n');
-  write(path.join(home, '.bashrc'), 'alias ll="ls -l"\n');
+  write(auth, '{"auth_mode":"chatgpt","tokens":{"id_token":"x"}}\n');
   const fetchImpl = fakeFetch();
   assert.equal(await main(['setup', 'claude-code', 'codex', '-y'], deps(home, fetchImpl)), 0);
   assert.equal(JSON.parse(read(settings)).env.ANTHROPIC_AUTH_TOKEN, API_KEY);
   // 一次 /models + 两次测试请求（messages、responses）
   assert.deepEqual(fetchImpl.calls.map((call) => new URL(call.url).pathname), ['/models', '/v1/messages', '/v1/responses']);
-  // 配置之后别的程序又往 .bashrc 追加了内容
-  fs.appendFileSync(path.join(home, '.bashrc'), 'export NVM_DIR="$HOME/.nvm"\n');
 
   assert.equal(await main(['undo'], deps(home)), 0);
   assert.equal(read(settings), '{\n  "theme": "dark"\n}\n');
   assert.ok(!fs.existsSync(path.join(home, '.codex', 'config.toml')), 'files we created are removed');
+  assert.ok(!fs.existsSync(path.join(home, '.claude', 'config.json')));
+  assert.equal(read(auth), '{"auth_mode":"chatgpt","tokens":{"id_token":"x"}}\n', 'ChatGPT login comes back');
   assert.equal(JSON.parse(read(path.join(home, '.claude.json'))).hasCompletedOnboarding, true, 'Claude Code state file is left alone');
-  const bashrc = read(path.join(home, '.bashrc'));
-  assert.ok(!bashrc.includes('LATENTIDE_API_KEY'));
-  assert.ok(bashrc.includes('alias ll="ls -l"') && bashrc.includes('NVM_DIR'), 'other content survives');
   assert.equal(await main(['undo'], deps(home)), 0, 'second undo has nothing left to do');
 });
 
