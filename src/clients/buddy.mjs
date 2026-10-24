@@ -61,6 +61,7 @@ function makeBuddy({ id, name, dirName, dirEnv, commands }) {
 }
 
 // WorkBuddy 5.x 只读 ~/.workbuddy（它启动时把 CODEBUDDY_CONFIG_DIR 指到这里），~/.codebuddy 是旧版遗留，
-// Owner 2026-10-21 在 WorkBuddy v5.8.3 上确认。CodeBuddy Code 认 CODEBUDDY_CONFIG_DIR，没设时用 ~/.codebuddy。
-export const workbuddy = makeBuddy({ id: 'workbuddy', name: 'WorkBuddy', dirName: '.workbuddy', commands: [] });
+// Owner 2026-10-21 在 WorkBuddy v5.8.3 上确认。WorkBuddy 自己认 WORKBUDDY_CONFIG_DIR（magpie internal/agent/workbuddy.go，MIT）。
+// CodeBuddy Code 认 CODEBUDDY_CONFIG_DIR，没设时用 ~/.codebuddy。
+export const workbuddy = makeBuddy({ id: 'workbuddy', name: 'WorkBuddy', dirName: '.workbuddy', dirEnv: 'WORKBUDDY_CONFIG_DIR', commands: [] });
 export const codebuddy = makeBuddy({ id: 'codebuddy', name: 'CodeBuddy Code', dirName: '.codebuddy', dirEnv: 'CODEBUDDY_CONFIG_DIR', commands: ['codebuddy'] });

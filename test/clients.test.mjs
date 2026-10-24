@@ -163,3 +163,19 @@ test('kimi uses ~/.kimi when only that directory exists, even before it has a co
   assert.ok(fs.existsSync(path.join(home, '.kimi', 'config.toml')));
   assert.ok(!fs.existsSync(path.join(home, '.kimi-code')));
 });
+
+test('workbuddy honours WORKBUDDY_CONFIG_DIR', (t) => {
+  const home = tempHome(t);
+  const custom = path.join(home, 'wb');
+  plan('workbuddy', home, { env: { WORKBUDDY_CONFIG_DIR: custom } });
+  assert.ok(fs.existsSync(path.join(custom, 'models.json')));
+  assert.ok(!fs.existsSync(path.join(home, '.workbuddy')));
+});
+
+test('kimi prefers an existing ~/.kimi-code over KIMI_SHARE_DIR, as the new Kimi Code never reads the old directory again', (t) => {
+  const home = tempHome(t);
+  fs.mkdirSync(path.join(home, '.kimi-code'));
+  plan('kimi', home, { env: { KIMI_SHARE_DIR: path.join(home, 'old-share') } });
+  assert.ok(fs.existsSync(path.join(home, '.kimi-code', 'config.toml')));
+  assert.ok(!fs.existsSync(path.join(home, 'old-share')));
+});

@@ -16,12 +16,13 @@ const DEFAULT_CONTEXT = 128_000;
 
 function configDir({ home, env }) {
   if (env.KIMI_CODE_HOME) return env.KIMI_CODE_HOME;
-  if (env.KIMI_SHARE_DIR) return env.KIMI_SHARE_DIR;
-  // 开源版 Kimi CLI 用 ~/.kimi（KIMI_SHARE_DIR 可改），新版 Kimi Code 用 ~/.kimi-code（KIMI_CODE_HOME 可改）。
-  // 新目录在就用新的；只有老目录在时用老目录；都没有时按新版文档用 ~/.kimi-code。
+  // 顺序照 magpie 的 kimiDir（internal/agent/kimi.go，MIT）：新版 Kimi Code 装了以后只读 ~/.kimi-code，
+  // 不会再回头读 ~/.kimi / KIMI_SHARE_DIR（旧版 kimi-cli 的目录），所以 ~/.kimi-code 在就一定用它。
   const current = path.join(home, '.kimi-code');
+  if (fs.existsSync(current)) return current;
+  if (env.KIMI_SHARE_DIR) return env.KIMI_SHARE_DIR;
   const legacy = path.join(home, '.kimi');
-  if (!fs.existsSync(current) && fs.existsSync(legacy)) return legacy;
+  if (fs.existsSync(legacy)) return legacy;
   return current;
 }
 
