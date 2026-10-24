@@ -3,11 +3,13 @@ import path from 'node:path';
 import claudeCode from './claude-code.mjs';
 import codex from './codex.mjs';
 import kimi from './kimi.mjs';
+import qwen from './qwen.mjs';
+import droid from './droid.mjs';
 import { codebuddy, workbuddy } from './buddy.mjs';
 import { modelsFor } from '../models.mjs';
 
 /** 能由工具直接写配置的客户端，按展示顺序排列。 */
-export const CLIENTS = [claudeCode, codex, kimi, workbuddy, codebuddy].map((client) => ({
+export const CLIENTS = [claudeCode, codex, kimi, qwen, droid, workbuddy, codebuddy].map((client) => ({
   needsModel: true,
   eligible(models) { return modelsFor(models, client.protocol); },
   ...client

@@ -179,3 +179,44 @@ test('kimi prefers an existing ~/.kimi-code over KIMI_SHARE_DIR, as the new Kimi
   assert.ok(fs.existsSync(path.join(home, '.kimi-code', 'config.toml')));
   assert.ok(!fs.existsSync(path.join(home, 'old-share')));
 });
+
+test('qwen appends openai entries with its own envKey, keeps the user\'s, and selects openai auth', (t) => {
+  const home = tempHome(t);
+  const file = path.join(home, '.qwen', 'settings.json');
+  write(file, JSON.stringify({ env: { MINE: '1' }, modelProviders: { openai: [{ id: 'x', envKey: 'MINE', baseUrl: 'https://o.example/v1' }] }, theme: 'dark' }));
+  plan('qwen', home, { model: 'claude-sonnet-5-5' });
+  plan('qwen', home, { model: 'claude-sonnet-5-5' });
+  const out = JSON.parse(read(file));
+  assert.equal(out.theme, 'dark');
+  assert.equal(out.env.MINE, '1');
+  assert.equal(out.env.LATENTIDE_QWEN_API_KEY, API_KEY);
+  assert.equal(out.modelProviders.openai[0].id, 'x');
+  const ours = out.modelProviders.openai.filter((entry) => entry.envKey === 'LATENTIDE_QWEN_API_KEY');
+  assert.ok(ours.length >= 3 && new Set(ours.map((entry) => entry.id)).size === ours.length, 'no duplicates after two runs');
+  assert.equal(ours[0].baseUrl, 'https://api.latentide.com/v1');
+  assert.deepEqual(out.model, { name: 'claude-sonnet-5-5', baseUrl: 'https://api.latentide.com/v1' });
+  assert.equal(out.security.auth.selectedType, 'openai');
+  assert.ok(!JSON.stringify(out.modelProviders).includes(API_KEY));
+});
+
+test('droid picks the native provider per model and sets the session default', (t) => {
+  const home = tempHome(t);
+  const file = path.join(home, '.factory', 'settings.json');
+  write(file, JSON.stringify({ customModels: [{ id: 'custom:mine', model: 'm' }], other: true }));
+  plan('droid', home, { model: 'gpt-6.1-sol' });
+  plan('droid', home, { model: 'gpt-6.1-sol' });
+  const out = JSON.parse(read(file));
+  assert.equal(out.other, true);
+  assert.equal(out.customModels[0].id, 'custom:mine');
+  const byModel = Object.fromEntries(out.customModels.filter((entry) => entry.id.startsWith('custom:latentide/')).map((entry) => [entry.model, entry]));
+  assert.equal(Object.keys(byModel).length, out.customModels.length - 1, 'no duplicates after two runs');
+  assert.equal(byModel['claude-sonnet-5-5'].provider, 'anthropic');
+  assert.equal(byModel['claude-sonnet-5-5'].baseUrl, 'https://api.latentide.com');
+  assert.equal(byModel['gpt-6.1-sol'].provider, 'openai');
+  assert.equal(byModel['gpt-6.1-sol'].baseUrl, 'https://api.latentide.com/v1');
+  assert.equal(byModel['gpt-6.1-sol'].noImageSupport, true);
+  assert.equal(byModel['claude-sonnet-5-5'].noImageSupport, false);
+  assert.equal(out.sessionDefaultSettings.model, 'custom:latentide/gpt-6.1-sol');
+  assert.equal(byModel['claude-haiku-5-5'].provider, 'anthropic');
+  assert.equal(byModel['no-tools-model'], undefined);
+});

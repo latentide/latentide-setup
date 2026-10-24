@@ -17,6 +17,8 @@ npx latentide
 | Claude Code（CLI / VS Code 插件） | Anthropic Messages | `~/.claude/settings.json`（`env` 字段）、`~/.claude/config.json`、`~/.claude.json` | 自动 |
 | Codex（CLI / IDE 插件） | OpenAI Responses | `~/.codex/config.toml`、`~/.codex/auth.json` | 自动 |
 | Kimi CLI（Kimi Code） | Anthropic Messages + OpenAI Responses | `~/.kimi-code/config.toml`（开源版 `~/.kimi/config.toml`） | 自动 |
+| Qwen Code | OpenAI Chat | `~/.qwen/settings.json`（`modelProviders.openai`、`env`） | 自动 |
+| Factory Droid | Messages / Responses / Chat（按模型选原生协议） | `~/.factory/settings.json`（`customModels`） | 自动 |
 | WorkBuddy（腾讯） | OpenAI Chat | `~/.workbuddy/models.json` | 自动 |
 | CodeBuddy Code（腾讯） | OpenAI Chat | `~/.codebuddy/models.json`（设了 `CODEBUDDY_CONFIG_DIR` 时写到那里） | 自动 |
 | Cursor、Trae、Cherry Studio、Chatbox、Cline / Roo Code | — | 只能在界面里填 | `npx latentide guide` 打印填写说明 |
@@ -36,7 +38,7 @@ npx latentide list                     # 支持的客户端，以及本机检测
 | 选项 | 作用 |
 |---|---|
 | `--key-stdin` | 从标准输入读 Key，适合脚本；也可以设置环境变量 `LATENTIDE_API_KEY` |
-| `--model <id>` | 默认模型（Claude Code、Codex、Kimi CLI） |
+| `--model <id>` | 默认模型（Claude Code、Codex、Kimi CLI、Qwen Code、Droid） |
 | `--dry-run` | 只打印将要写入的内容（Key 打码），不改任何文件 |
 | `-y, --yes` | 不逐项确认，模型用推荐值 |
 | `--no-ping` | 写完不发测试请求 |
@@ -91,7 +93,7 @@ npx latentide
 
 Paste your key, pick the clients installed on this machine, choose a default model, confirm, and a tiny test request verifies everything works. Original files are backed up first, and `npx latentide undo` restores them.
 
-Automatic setup: **Claude Code**, **Codex**, **Kimi CLI**, **WorkBuddy**, **CodeBuddy Code**. For Cursor, Trae, Cherry Studio, Chatbox and Cline / Roo Code, `npx latentide guide` prints what to fill in.
+Automatic setup: **Claude Code**, **Codex**, **Kimi CLI**, **Qwen Code**, **Factory Droid**, **WorkBuddy**, **CodeBuddy Code**. For Cursor, Trae, Cherry Studio, Chatbox and Cline / Roo Code, `npx latentide guide` prints what to fill in.
 
 Models come from the gateway's live `GET /models`, filtered to those that support tool calls on the protocol each client uses. Only our own entries are touched, unparseable config files are skipped rather than overwritten, files holding the key are created with mode `0600`, and nothing is collected. No dependencies; Node 18.17+.
 
